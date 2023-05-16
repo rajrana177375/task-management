@@ -26,3 +26,13 @@ Taskify is the ultimate solution for effective task management. Stay organized, 
 - Task Dependencies: Support task dependencies, where users can define that certain tasks need to be completed before others can start. This ensures a logical workflow and prevents bottlenecks.
 
 - Collaboration and Comments: Enable users to collaborate by adding comments, discussing tasks, and mentioning specific team members. This facilitates communication and provides context for the tasks.
+
+- Time Tracking: Incorporate a time tracking feature that allows users to track the amount of time spent on each task. This feature can provide valuable insights into productivity and help users manage their time more effectively.
+
+- Recurring Tasks: Implement the ability to create recurring tasks, such as daily, weekly, or monthly tasks. This feature is useful for tasks that need to be performed regularly, eliminating the need to manually create them each time.
+
+- Task Notes and Attachments: Enable users to add additional notes, comments, or attachments to tasks. This feature allows for more detailed information or documentation related to a specific task, making it easier to reference or share with team members.
+
+- Kanban Board or Gantt Chart: Provide a visual representation of tasks using a Kanban board or Gantt chart. Users can easily view the status of tasks, their dependencies, and the overall progress of a project.
+
+- Task Templates: Offer pre-defined task templates or the ability to create custom templates for frequently recurring tasks or projects. This feature simplifies task creation and ensures consistency in task management.
