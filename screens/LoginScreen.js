@@ -21,6 +21,17 @@ const LoginScreen = () => {
     }, [])
   );
 
+  const resetPassword = async () => {
+    await sendPasswordResetEmail(auth, email)
+      .then(() => {
+        alert('Password reset email sent!');
+      })
+      .catch((error) => {
+        console.error('Error sending password reset email:', error);
+      });
+  }
+
+
   const handleRegister = () => {
     navigation.navigate('Register');
   }
@@ -64,6 +75,8 @@ const LoginScreen = () => {
           onPress: () => setShowPassword(!showPassword),
         }}
       />
+
+      <Text onPress={resetPassword} style={styles.forgotPasswordText}>Forgot Password?</Text>
 
       <Button
         title="Login"

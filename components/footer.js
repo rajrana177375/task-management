@@ -10,6 +10,9 @@ const Footer = ({ navigation }) => {
       case 0:
         navigation.navigate('Tasks');
         break;
+      case 1:
+        navigation.navigate('Profile');
+        break;
       default:
         break;
     }
@@ -18,6 +21,8 @@ const Footer = ({ navigation }) => {
   return (
     <Tab value={activeTab} onChange={handleTabPress} containerStyle={{ backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#ccc', height: 56 }}>
       <Tab.Item icon={<Icon name='list' type='font-awesome' size={20} color='#999' />} />
+
+      <Tab.Item icon={<Icon name='user' type='font-awesome' size={20} color='#999' />} />
     </Tab>
   );
 };

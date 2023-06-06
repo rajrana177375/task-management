@@ -7,6 +7,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import TasksScreen from "./screens/TasksScreen";
 import Footer from "./components/footer";
+import ProfileScreen from "./screens/ProfileScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +24,7 @@ export default function App() {
           <Tab.Screen name='Login' component={LoginScreen}/>
           <Tab.Screen name='Register' component={RegisterScreen} />
           <Tab.Screen name='Tasks' component={TasksScreen} />
+          <Tab.Screen name='Profile' component={ProfileScreen} />
 
         </Tab.Navigator>
       </NavigationContainer>
