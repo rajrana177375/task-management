@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { Input, Button } from 'react-native-elements';
+import { Input, Button, Text } from 'react-native-elements';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import { doc, setDoc } from "firebase/firestore"
@@ -16,6 +16,10 @@ const RegisterScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigation = useNavigation();
+
+  const goToLogin = () => {
+    navigation.navigate('Login')
+  }
 
   const handleRegister = async () => {
 
@@ -58,19 +62,23 @@ const RegisterScreen = () => {
 
       <Input
         placeholder='Name'
-        leftIcon={{ type: 'font-awesome', name: 'user' }}
+        rightIcon={{ type: 'font-awesome', name: 'user' }}
         value={name}
         onChangeText={setName}
       />
 
       <Input
         placeholder="Email"
+        autoCapitalize="none"
+        rightIcon={{ type: 'font-awesome', name: 'envelope' }}
         value={email}
         onChangeText={setEmail}
       />
 
       <Input
         placeholder="Username"
+        autoCapitalize="none"
+        rightIcon={{ type: 'font-awesome', name: 'user-circle' }}
         value={username}
         onChangeText={setUsername}
       />
@@ -80,6 +88,7 @@ const RegisterScreen = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry={!showPassword}
+        autoCapitalize="none"
         rightIcon={{
           type: 'font-awesome',
           name: showPassword ? 'eye-slash' : 'eye',
@@ -92,6 +101,7 @@ const RegisterScreen = () => {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry={!showPassword}
+        autoCapitalize="none"
         rightIcon={{
           type: 'font-awesome',
           name: showPassword ? 'eye-slash' : 'eye',
@@ -103,6 +113,9 @@ const RegisterScreen = () => {
         title="Register"
         onPress={handleRegister}
       />
+
+<Text onPress={goToLogin} style={styles.goToLogin}> {'<- Go to Login Page'}</Text>
+
     </View>
   );
 };
@@ -118,6 +131,10 @@ const styles = StyleSheet.create({
     height: 150,
     marginBottom: 30,
   },
+  goToLogin: {
+    marginVertical: 10,
+    color: 'blue',
+  }
 });
 
 export default RegisterScreen;

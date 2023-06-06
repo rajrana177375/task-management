@@ -58,6 +58,7 @@ const LoginScreen = () => {
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
         rightIcon={{
           type: 'font-awesome',
           name: 'envelope'
@@ -68,6 +69,7 @@ const LoginScreen = () => {
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        autoCapitalize="none"
         secureTextEntry={!showPassword}
         rightIcon={{
           type: 'font-awesome',
