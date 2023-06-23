@@ -1,7 +1,7 @@
 import { db } from '../services/firebase';
-import { Text } from 'react-native';
-import { Card, Button, ButtonGroup } from 'react-native-elements';
-import { updateDoc, doc } from 'firebase/firestore';
+import { Text, View, Alert } from 'react-native';
+import { Card, Button, ButtonGroup, Icon } from 'react-native-elements';
+import { updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 const Task = ({ task, onEditTask }) => {
   const handleEditTask = () => {
@@ -19,6 +19,31 @@ const Task = ({ task, onEditTask }) => {
     }
   };
 
+  const handleDeleteTask = () => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to permanently delete this task?',
+      [
+        {
+          text: 'Cancel',
+        },
+        {
+          text: 'DELETE',
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, 'tasks', task.id));
+              alert('Task deleted successfully!');
+            } catch (error) {
+              console.error('Error deleting task:', error);
+              alert('Error deleting task. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'in progress':
@@ -34,7 +59,15 @@ const Task = ({ task, onEditTask }) => {
 
   return (
     <Card>
-      <Card.Title>{task.title}</Card.Title>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{task.title}</Text>
+        <Icon
+          name="trash"
+          type="font-awesome"
+          color="#FF0000"
+          onPress={handleDeleteTask}
+        />
+      </View>
       <Card.Divider />
       <Text>Description: {task.description}</Text>
       <ButtonGroup
@@ -44,7 +77,8 @@ const Task = ({ task, onEditTask }) => {
           const status = index === 1 ? 'completed' : index === 2 ? 'pending' : 'in progress';
           handleTaskStatusChange(status);
         }}
-        buttonStyle={{ backgroundColor: '#FFFFFF' }}
+        containerStyle={{ width: '95%' }}
+        buttonStyle={{ flex: 1, backgroundColor: '#FFFFFF' }}
         selectedButtonStyle={{ backgroundColor: getStatusColor(task.status) }}
         textStyle={{ color: '#000000' }}
         selectedTextStyle={{ color: '#FFFFFF' }}
@@ -52,6 +86,7 @@ const Task = ({ task, onEditTask }) => {
       <Button
         title="Edit"
         onPress={handleEditTask}
+        containerStyle={{ width: '95%', alignSelf: 'center' }}
       />
     </Card>
   );

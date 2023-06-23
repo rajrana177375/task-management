@@ -6,7 +6,7 @@ import { collection, onSnapshot, addDoc, Timestamp, updateDoc, doc, where, query
 import { auth, db } from '../services/firebase';
 import { Input, Button } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
+import {Picker} from '@react-native-picker/picker';
 
 const TasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -17,6 +17,7 @@ const TasksScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [filterStatus, setFilterStatus] = useState('');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -25,25 +26,40 @@ const TasksScreen = () => {
     return unsubscribe;
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
     if (currentUser) {
       const tasksRef = collection(db, 'tasks');
-      const q = query(tasksRef, where('creator', '==', currentUser.uid));
+      let q = '';
+      if (filterStatus) {
+        q = query(
+          tasksRef,
+          where('creator', '==', currentUser.uid),
+          where('status', '==', filterStatus)
+        );
+      } else {
+        q = query(
+          tasksRef,
+          where('creator', '==', currentUser.uid),
+          where('status', '!=', 'completed')
+        );
+      }
+  
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const userTasks = snapshot.docs.map((doc) => ({...doc.data(), id: doc.id}));
+        const userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
         setTasks(userTasks);
       });
       return unsubscribe;
     }
-  }, [currentUser]);  
+  }, [currentUser, filterStatus]);
   
+
   const handleTaskCreation = async () => {
     try {
       const userID = auth.currentUser.uid;
       const taskRef = collection(db, 'tasks');
-  
+
       const dueDateTimestamp = taskDueDate ? Timestamp.fromDate(taskDueDate) : null;
-  
+
       const newTask = {
         id: '',
         title: taskTitle,
@@ -53,20 +69,19 @@ const TasksScreen = () => {
         collaborators: [userID],
         status: 'in progress',
       };
-      
-  
+
       const addedTaskRef = await addDoc(taskRef, newTask);
       const taskId = addedTaskRef.id;
-  
+
       const updatedTask = {
         ...newTask,
-        id: taskId, 
+        id: taskId,
       };
-  
+
       await updateDoc(doc(db, 'tasks', taskId), updatedTask);
-  
+
       setTasks([...tasks, updatedTask]);
-  
+
       setTaskTitle('');
       setTaskDescription('');
       setTaskDueDate(new Date());
@@ -77,22 +92,24 @@ const TasksScreen = () => {
       alert('Error creating task. Please try again.');
     }
   };
-  
+
+  const addNewTask = () => {
+    setTaskTitle('');
+    setTaskDescription('');
+    setTaskDueDate(new Date());
+    setModalVisible(true);
+  }
+
   const handleTaskUpdate = async () => {
     try {
-      console.log('rrrr');
       if (!editingTask) {
         console.error('No task selected for update');
         return;
       }
-      console.log('jjjj', editingTask);
 
-  
       const taskDocRef = doc(db, 'tasks', editingTask.id);
-  
-      console.log('777777');
+
       const dueDateTimestamp = taskDueDate ? new Timestamp(taskDueDate.getTime() / 1000, 0) : null;
-      console.log('55555');
 
       const updatedTask = {
         title: taskTitle,
@@ -101,10 +118,9 @@ const TasksScreen = () => {
         collaborators: editingTask.collaborators || [],
         status: editingTask.status,
       };
-      
-      console.log('1111');
+
       await updateDoc(taskDocRef, updatedTask);
-  
+
       setTaskTitle('');
       setTaskDescription('');
       setTaskDueDate(new Date());
@@ -116,17 +132,14 @@ const TasksScreen = () => {
       alert('Error updating task. Please try again.');
     }
   };
-  
-  
 
   const openTaskModal = (task) => {
-    console.log(task);
     setTaskTitle(task.title);
     setTaskDescription(task.description);
     setTaskDueDate(task.dueDate ? task.dueDate.toDate() : new Date());
     setEditingTask(task);
     setModalVisible(true);
-  };  
+  };
 
   const handleDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || taskDueDate;
@@ -134,8 +147,26 @@ const TasksScreen = () => {
     setTaskDueDate(currentDate);
   };
 
+  const handleFilterChange = (value) => {
+    setFilterStatus(value);
+  };
+
   return (
     <View style={styles.container}>
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterLabel}>Filter tasks by: </Text>
+        <Picker
+          style={styles.filterPicker}
+          selectedValue={filterStatus}
+          onValueChange={handleFilterChange}
+        >
+          <Picker.Item label="None" value="" />
+          <Picker.Item label="In Progress" value="in progress" />
+          <Picker.Item label="Completed" value="completed" />
+          <Picker.Item label="Pending" value="pending" />
+        </Picker>
+      </View>
+
       <ScrollView>
         {tasks.map((task, index) => (
           <Task key={index} task={task} onEditTask={openTaskModal} />
@@ -144,7 +175,7 @@ const TasksScreen = () => {
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => setModalVisible(true)}
+        onPress={() => addNewTask()}
       >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
@@ -183,6 +214,7 @@ const TasksScreen = () => {
               )}
             </TouchableOpacity>
             <Button
+            disabled={!taskTitle || !taskDescription || !taskDueDate}
               title={editingTask ? 'Update Task' : 'Create Task'}
               onPress={editingTask ? handleTaskUpdate : handleTaskCreation}
             />
@@ -205,11 +237,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+  },
+  filterLabel: {
+    marginRight: 5,
+    fontWeight: 'bold'
+  },
+  filterPicker: {
+    width: '65%',
+  },
   addButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: 'blue',
+    backgroundColor: '#6CBEED',
     width: 60,
     height: 60,
     borderRadius: 30,
