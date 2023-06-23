@@ -45,20 +45,22 @@ const TasksScreen = () => {
       const dueDateTimestamp = taskDueDate ? Timestamp.fromDate(taskDueDate) : null;
   
       const newTask = {
-        id: '', // Placeholder for the ID
+        id: '',
         title: taskTitle,
         description: taskDescription,
         dueDate: dueDateTimestamp,
         creator: userID,
         collaborators: [userID],
+        status: 'in progress',
       };
+      
   
       const addedTaskRef = await addDoc(taskRef, newTask);
       const taskId = addedTaskRef.id;
   
       const updatedTask = {
         ...newTask,
-        id: taskId,
+        id: taskId, 
       };
   
       await updateDoc(doc(db, 'tasks', taskId), updatedTask);
@@ -97,8 +99,9 @@ const TasksScreen = () => {
         description: taskDescription,
         dueDate: dueDateTimestamp,
         collaborators: editingTask.collaborators || [],
+        status: editingTask.status,
       };
-  
+      
       console.log('1111');
       await updateDoc(taskDocRef, updatedTask);
   

@@ -1,43 +1,60 @@
+import { db } from '../services/firebase';
 import { Text } from 'react-native';
-import { Card } from 'react-native-elements';
-import { FontAwesome } from '@expo/vector-icons';
+import { Card, Button, ButtonGroup } from 'react-native-elements';
+import { updateDoc, doc } from 'firebase/firestore';
 
 const Task = ({ task, onEditTask }) => {
-
   const handleEditTask = () => {
     onEditTask(task);
   };
 
-  const dueDate = task.dueDate ? task.dueDate.toDate() : null;
+  const handleTaskStatusChange = async (status) => {
+    try {
+      const updatedTask = { ...task, status };
+      await updateDoc(doc(db, 'tasks', task.id), updatedTask);
+      alert('Task status updated successfully!');
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      alert('Error updating task status. Please try again.');
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'in progress':
+        return '#F19A3E';
+      case 'completed':
+        return '#B9FFB7';
+      case 'pending':
+        return '#F15152';
+      default:
+        return '#FFFFFF';
+    }
+  };
 
   return (
     <Card>
       <Card.Title>{task.title}</Card.Title>
       <Card.Divider />
       <Text>Description: {task.description}</Text>
-      {dueDate && isValidDate(dueDate) && (
-        <Text>Due Date: {dueDate.toLocaleDateString()}</Text>
-      )}
-            <FontAwesome
-        name="pencil"
-        size={20}
+      <ButtonGroup
+        buttons={['In Progress', 'Completed', 'Pending']}
+        selectedIndex={task.status === 'completed' ? 1 : task.status === 'pending' ? 2 : 0}
+        onPress={(index) => {
+          const status = index === 1 ? 'completed' : index === 2 ? 'pending' : 'in progress';
+          handleTaskStatusChange(status);
+        }}
+        buttonStyle={{ backgroundColor: '#FFFFFF' }}
+        selectedButtonStyle={{ backgroundColor: getStatusColor(task.status) }}
+        textStyle={{ color: '#000000' }}
+        selectedTextStyle={{ color: '#FFFFFF' }}
+      />
+      <Button
+        title="Edit"
         onPress={handleEditTask}
-        style={styles.editIcon}
       />
     </Card>
   );
-};
-
-const isValidDate = (date) => {
-  return Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date);
-};
-
-const styles = {
-  editIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
 };
 
 export default Task;
