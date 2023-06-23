@@ -36,15 +36,15 @@ const LoginScreen = () => {
     navigation.navigate('Register');
   }
 
-  const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password).then(() => {
-        navigation.navigate('Tasks');
-      })
-    } catch (error) {
-      alert('Incorrect email or password')
-    }
-  };
+const handleLogin = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, email, password).then(() => {
+      setTimeout(() => navigation.navigate('Tasks'), 1000);
+    })
+  } catch (error) {
+    alert('Incorrect email or password')
+  }
+};
 
   return (
     <View style={styles.container}>

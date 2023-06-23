@@ -6,7 +6,6 @@ import { auth, db } from "../services/firebase";
 import { doc, setDoc } from "firebase/firestore"
 import { useNavigation } from '@react-navigation/native';
 
-
 const RegisterScreen = () => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -22,7 +21,6 @@ const RegisterScreen = () => {
   }
 
   const handleRegister = async () => {
-
     if (password !== confirmPassword) return alert('Password does not match!');
 
     try {
@@ -51,7 +49,6 @@ const RegisterScreen = () => {
       alert('Signup Error, try again!')
     }
   };
-
 
   return (
     <View style={styles.container}>
@@ -114,7 +111,7 @@ const RegisterScreen = () => {
         onPress={handleRegister}
       />
 
-<Text onPress={goToLogin} style={styles.goToLogin}> {'<- Go to Login Page'}</Text>
+      <Text onPress={goToLogin} style={styles.goToLogin}> {'<- Go to Login Page'}</Text>
 
     </View>
   );
