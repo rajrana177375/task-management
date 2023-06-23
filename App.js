@@ -1,9 +1,7 @@
 import React from "react";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
-
 import { NavigationContainer } from '@react-navigation/native';
-
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import TasksScreen from "./screens/TasksScreen";
 import Footer from "./components/footer";
