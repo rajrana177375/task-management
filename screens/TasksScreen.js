@@ -15,6 +15,7 @@ const TasksScreen = () => {
   const [taskDescription, setTaskDescription] = useState('');
   const [taskDueDate, setTaskDueDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ const TasksScreen = () => {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (currentUser) {
       const tasksRef = collection(db, 'tasks');
       const q = query(tasksRef, where('creator', '==', currentUser.uid));
@@ -34,36 +35,36 @@ const TasksScreen = () => {
       });
       return unsubscribe;
     }
-  }, [currentUser]);
-
+  }, [currentUser]);  
+  
   const handleTaskCreation = async () => {
     try {
       const userID = auth.currentUser.uid;
       const taskRef = collection(db, 'tasks');
-
+  
       const dueDateTimestamp = taskDueDate ? Timestamp.fromDate(taskDueDate) : null;
-
+  
       const newTask = {
-        id: '',
+        id: '', // Placeholder for the ID
         title: taskTitle,
         description: taskDescription,
         dueDate: dueDateTimestamp,
         creator: userID,
         collaborators: [userID],
       };
-
+  
       const addedTaskRef = await addDoc(taskRef, newTask);
       const taskId = addedTaskRef.id;
-
+  
       const updatedTask = {
         ...newTask,
         id: taskId,
       };
-
+  
       await updateDoc(doc(db, 'tasks', taskId), updatedTask);
-
+  
       setTasks([...tasks, updatedTask]);
-
+  
       setTaskTitle('');
       setTaskDescription('');
       setTaskDueDate(new Date());
@@ -74,6 +75,55 @@ const TasksScreen = () => {
       alert('Error creating task. Please try again.');
     }
   };
+  
+  const handleTaskUpdate = async () => {
+    try {
+      console.log('rrrr');
+      if (!editingTask) {
+        console.error('No task selected for update');
+        return;
+      }
+      console.log('jjjj', editingTask);
+
+  
+      const taskDocRef = doc(db, 'tasks', editingTask.id);
+  
+      console.log('777777');
+      const dueDateTimestamp = taskDueDate ? new Timestamp(taskDueDate.getTime() / 1000, 0) : null;
+      console.log('55555');
+
+      const updatedTask = {
+        title: taskTitle,
+        description: taskDescription,
+        dueDate: dueDateTimestamp,
+        collaborators: editingTask.collaborators || [],
+      };
+  
+      console.log('1111');
+      await updateDoc(taskDocRef, updatedTask);
+  
+      setTaskTitle('');
+      setTaskDescription('');
+      setTaskDueDate(new Date());
+      setEditingTask(null);
+      setModalVisible(false);
+      alert('Task updated successfully!');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      alert('Error updating task. Please try again.');
+    }
+  };
+  
+  
+
+  const openTaskModal = (task) => {
+    console.log(task);
+    setTaskTitle(task.title);
+    setTaskDescription(task.description);
+    setTaskDueDate(task.dueDate ? task.dueDate.toDate() : new Date());
+    setEditingTask(task);
+    setModalVisible(true);
+  };  
 
   const handleDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || taskDueDate;
@@ -85,7 +135,7 @@ const TasksScreen = () => {
     <View style={styles.container}>
       <ScrollView>
         {tasks.map((task, index) => (
-          <Task key={index} task={task} />
+          <Task key={index} task={task} onEditTask={openTaskModal} />
         ))}
       </ScrollView>
 
@@ -130,12 +180,15 @@ const TasksScreen = () => {
               )}
             </TouchableOpacity>
             <Button
-              title="Create Task"
-              onPress={handleTaskCreation}
+              title={editingTask ? 'Update Task' : 'Create Task'}
+              onPress={editingTask ? handleTaskUpdate : handleTaskCreation}
             />
             <Button
               title="Cancel"
-              onPress={() => setModalVisible(false)}
+              onPress={() => {
+                setModalVisible(false);
+                setEditingTask(null);
+              }}
               buttonStyle={styles.cancelButton}
             />
           </View>
