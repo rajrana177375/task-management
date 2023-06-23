@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import Task from '../components/Task';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, onSnapshot, addDoc, Timestamp, updateDoc, doc, where, query } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { Input, Button } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 
 const TasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -18,6 +18,7 @@ const TasksScreen = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [filterStatus, setFilterStatus] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -28,6 +29,7 @@ const TasksScreen = () => {
 
   useEffect(() => {
     if (currentUser) {
+      setLoading(true);
       const tasksRef = collection(db, 'tasks');
       let q = '';
       if (filterStatus) {
@@ -43,15 +45,15 @@ const TasksScreen = () => {
           where('status', '!=', 'completed')
         );
       }
-  
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
         setTasks(userTasks);
+        setLoading(false);
       });
       return unsubscribe;
     }
   }, [currentUser, filterStatus]);
-  
 
   const handleTaskCreation = async () => {
     try {
@@ -168,15 +170,16 @@ const TasksScreen = () => {
       </View>
 
       <ScrollView>
-        {tasks.map((task, index) => (
-          <Task key={index} task={task} onEditTask={openTaskModal} />
-        ))}
+        {loading ? (
+          <ActivityIndicator size="large" color="blue" />
+        ) : (
+          tasks.map((task, index) => (
+            <Task key={index} task={task} onEditTask={openTaskModal} />
+          ))
+        )}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => addNewTask()}
-      >
+      <TouchableOpacity style={styles.addButton} onPress={addNewTask}>
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
 
@@ -214,7 +217,7 @@ const TasksScreen = () => {
               )}
             </TouchableOpacity>
             <Button
-            disabled={!taskTitle || !taskDescription || !taskDueDate}
+              disabled={!taskTitle || !taskDescription || !taskDueDate}
               title={editingTask ? 'Update Task' : 'Create Task'}
               onPress={editingTask ? handleTaskUpdate : handleTaskCreation}
             />
@@ -245,7 +248,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     marginRight: 5,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   filterPicker: {
     width: '65%',

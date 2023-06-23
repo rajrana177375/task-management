@@ -42,7 +42,13 @@ const RegisterScreen = () => {
         })
         .catch((error) => {
           console.log('Error during user creation in Auth: ', error);
-          alert('Signup Error, try again!');
+          if (error.code === 'auth/email-already-in-use') {
+            alert('Email already in use!');
+          } else if (error.code === 'auth/invalid-email') {
+            alert('Invalid email format!');
+          } else {
+            alert('Signup Error, try again!');
+          }
         });
     } catch (error) {
       console.log('Error during user registration process: ', error);
