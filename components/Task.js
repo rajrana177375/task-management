@@ -61,6 +61,7 @@ const Task = ({ task, onEditTask }) => {
     <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{task.title}</Text>
+        <Text>Priority: {task.priority}</Text>
         <Icon
           name="trash"
           type="font-awesome"

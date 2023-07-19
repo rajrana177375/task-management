@@ -19,6 +19,10 @@ const TasksScreen = () => {
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [filterStatus, setFilterStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [taskPriority, setTaskPriority] = useState('');
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filterPriority, setFilterPriority] = useState('');
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -32,11 +36,24 @@ const TasksScreen = () => {
       setLoading(true);
       const tasksRef = collection(db, 'tasks');
       let q = '';
-      if (filterStatus) {
+      if (filterStatus && filterPriority) {
+        q = query(
+          tasksRef,
+          where('creator', '==', currentUser.uid),
+          where('status', '==', filterStatus),
+          where('priority', '==', filterPriority)
+        );
+      } else if (filterStatus) {
         q = query(
           tasksRef,
           where('creator', '==', currentUser.uid),
           where('status', '==', filterStatus)
+        );
+      } else if (filterPriority) {
+        q = query(
+          tasksRef,
+          where('creator', '==', currentUser.uid),
+          where('priority', '==', filterPriority)
         );
       } else {
         q = query(
@@ -53,7 +70,7 @@ const TasksScreen = () => {
       });
       return unsubscribe;
     }
-  }, [currentUser, filterStatus]);
+  }, [currentUser, filterStatus, filterPriority]);
 
   const handleTaskCreation = async () => {
     try {
@@ -70,6 +87,7 @@ const TasksScreen = () => {
         creator: userID,
         collaborators: [userID],
         status: 'in progress',
+        priority: taskPriority,
       };
 
       const addedTaskRef = await addDoc(taskRef, newTask);
@@ -78,6 +96,7 @@ const TasksScreen = () => {
       const updatedTask = {
         ...newTask,
         id: taskId,
+        priority: taskPriority,
       };
 
       await updateDoc(doc(db, 'tasks', taskId), updatedTask);
@@ -119,6 +138,7 @@ const TasksScreen = () => {
         dueDate: dueDateTimestamp,
         collaborators: editingTask.collaborators || [],
         status: editingTask.status,
+        priority: taskPriority,
       };
 
       await updateDoc(taskDocRef, updatedTask);
@@ -141,6 +161,7 @@ const TasksScreen = () => {
     setTaskDueDate(task.dueDate ? task.dueDate.toDate() : new Date());
     setEditingTask(task);
     setModalVisible(true);
+    setTaskPriority(task.priority);
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -157,17 +178,60 @@ const TasksScreen = () => {
     <View style={styles.container}>
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter tasks by: </Text>
-        <Picker
-          style={styles.filterPicker}
-          selectedValue={filterStatus}
-          onValueChange={handleFilterChange}
-        >
-          <Picker.Item label="None" value="" />
-          <Picker.Item label="In Progress" value="in progress" />
-          <Picker.Item label="Completed" value="completed" />
-          <Picker.Item label="Pending" value="pending" />
-        </Picker>
+
+
+        <View style={styles.filterContainer}>
+          <Button
+            title="Filter tasks"
+            onPress={() => setFilterModalVisible(true)}
+          />
+        </View>
+
       </View>
+
+
+      <Modal
+        visible={filterModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.filterModalContainer}>
+          <View style={styles.filterModalContent}>
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Filter tasks by status: </Text>
+              <Picker
+                style={styles.filterPicker}
+                selectedValue={filterStatus}
+                onValueChange={handleFilterChange}
+              >
+                <Picker.Item label="None" value="" />
+                <Picker.Item label="In Progress" value="in progress" />
+                <Picker.Item label="Completed" value="completed" />
+                <Picker.Item label="Pending" value="pending" />
+              </Picker>
+            </View>
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Filter tasks by priority: </Text>
+              <Picker
+                style={styles.filterPicker}
+                selectedValue={filterPriority}
+                onValueChange={(value) => setFilterPriority(value)}
+              >
+                <Picker.Item label="None" value="" />
+                <Picker.Item label="Low" value="low" />
+                <Picker.Item label="Medium" value="medium" />
+                <Picker.Item label="High" value="high" />
+              </Picker>
+            </View>
+            <Button
+              title="Apply Filters"
+              onPress={() => setFilterModalVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
+
 
       <ScrollView>
         {loading ? (
@@ -216,6 +280,14 @@ const TasksScreen = () => {
                 <Text>{taskDueDate.toLocaleDateString()}</Text>
               )}
             </TouchableOpacity>
+            <Picker
+              selectedValue={taskPriority}
+              onValueChange={(itemValue, itemIndex) => setTaskPriority(itemValue)}
+            >
+              <Picker.Item label="Low" value="low" />
+              <Picker.Item label="Medium" value="medium" />
+              <Picker.Item label="High" value="high" />
+            </Picker>
             <Button
               disabled={!taskTitle || !taskDescription || !taskDueDate}
               title={editingTask ? 'Update Task' : 'Create Task'}
@@ -226,6 +298,7 @@ const TasksScreen = () => {
               onPress={() => {
                 setModalVisible(false);
                 setEditingTask(null);
+                setTaskPriority('');
               }}
               buttonStyle={styles.cancelButton}
             />
@@ -285,6 +358,23 @@ const styles = StyleSheet.create({
     marginTop: 20,
     backgroundColor: 'red',
   },
+  filterModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  filterModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 5,
+    padding: 20,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  filterSection: {
+    marginBottom: 20,
+  },
+
 });
 
 export default TasksScreen;
