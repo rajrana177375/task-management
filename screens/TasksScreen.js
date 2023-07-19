@@ -26,9 +26,14 @@ const TasksScreen = () => {
   const [taskPriority, setTaskPriority] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterPriority, setFilterPriority] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+
+
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [taskCategory, setTaskCategory] = useState('');
+
   const multiSelect = useRef();
 
   const onSelectedItemsChange = (selectedItems) => {
@@ -54,58 +59,35 @@ const TasksScreen = () => {
     return unsubscribe;
   }, []);
 
-
-  // useEffect(() => {
-  //   if (currentUser) {
-  //     setLoading(true);
-  //     const tasksRef = collection(db, 'tasks');
-  //     let q = '';
-  //     if (filterStatus && filterPriority) {
-  //       q = query(
-  //         tasksRef,
-  //         where('creator', '==', currentUser.uid),
-  //         where('status', '==', filterStatus),
-  //         where('priority', '==', filterPriority)
-  //       );
-  //     } else if (filterStatus) {
-  //       q = query(
-  //         tasksRef,
-  //         where('creator', '==', currentUser.uid),
-  //         where('status', '==', filterStatus)
-  //       );
-  //     } else if (filterPriority) {
-  //       q = query(
-  //         tasksRef,
-  //         where('creator', '==', currentUser.uid),
-  //         where('priority', '==', filterPriority)
-  //       );
-  //     } else {
-  //       q = query(
-  //         tasksRef,
-  //         where('creator', '==', currentUser.uid),
-  //         where('status', '!=', 'completed')
-  //       );
-  //     }
-
-  //     const unsubscribe = onSnapshot(q, (snapshot) => {
-  //       const userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-  //       setTasks(userTasks);
-  //       setLoading(false);
-  //     });
-  //     return unsubscribe;
-  //   }
-  // }, [currentUser, filterStatus, filterPriority]);
-
   useEffect(() => {
     if (currentUser) {
       setLoading(true);
       const tasksRef = collection(db, 'tasks');
       let q = '';
-      if (filterStatus && filterPriority) {
+      if (filterStatus && filterPriority && filterCategory) {
+        q = query(
+          tasksRef,
+          where('status', '==', filterStatus),
+          where('priority', '==', filterPriority),
+          where('category', '==', filterCategory)
+        );
+      } else if (filterStatus && filterPriority) {
         q = query(
           tasksRef,
           where('status', '==', filterStatus),
           where('priority', '==', filterPriority)
+        );
+      } else if (filterStatus && filterCategory) {
+        q = query(
+          tasksRef,
+          where('status', '==', filterStatus),
+          where('category', '==', filterCategory)
+        );
+      } else if (filterPriority && filterCategory) {
+        q = query(
+          tasksRef,
+          where('priority', '==', filterPriority),
+          where('category', '==', filterCategory)
         );
       } else if (filterStatus) {
         q = query(
@@ -117,6 +99,11 @@ const TasksScreen = () => {
           tasksRef,
           where('priority', '==', filterPriority)
         );
+      } else if (filterCategory) {
+        q = query(
+          tasksRef,
+          where('category', '==', filterCategory)
+        );
       } else {
         q = query(
           tasksRef,
@@ -127,14 +114,13 @@ const TasksScreen = () => {
       const unsubscribe = onSnapshot(q, (snapshot) => {
         let userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
         userTasks = userTasks.filter(el => el.collaborators.find(uid => uid == currentUser.uid) || el.creator == currentUser.uid)
-        console.log('1111111', currentUser.uid);
-        console.log(userTasks);
         setTasks(userTasks);
         setLoading(false);
       });
       return unsubscribe;
     }
-  }, [currentUser, filterStatus, filterPriority]);
+  }, [currentUser, filterStatus, filterPriority, filterCategory]);
+
 
   const handleTaskCreation = async () => {
     try {
@@ -152,6 +138,7 @@ const TasksScreen = () => {
         collaborators: selectedItems || [],
         status: 'in progress',
         priority: taskPriority,
+        category: taskCategory,
       };
 
       const addedTaskRef = await addDoc(taskRef, newTask);
@@ -171,6 +158,7 @@ const TasksScreen = () => {
       setTaskDescription('');
       setTaskDueDate(new Date());
       setModalVisible(false);
+      setTaskCategory('');
       alert('Task created successfully!');
     } catch (error) {
       console.error('Error creating task:', error);
@@ -203,6 +191,7 @@ const TasksScreen = () => {
         collaborators: selectedItems || [],
         status: editingTask.status,
         priority: taskPriority,
+        category: taskCategory,
       };
       await updateDoc(taskDocRef, updatedTask);
 
@@ -211,6 +200,7 @@ const TasksScreen = () => {
       setTaskDueDate(new Date());
       setEditingTask(null);
       setModalVisible(false);
+      setTaskCategory('');
       alert('Task updated successfully!');
     } catch (error) {
       console.error('Error updating task:', error);
@@ -225,6 +215,7 @@ const TasksScreen = () => {
     setEditingTask(task);
     setModalVisible(true);
     setTaskPriority(task.priority);
+    setTaskCategory(task.category);
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -241,8 +232,6 @@ const TasksScreen = () => {
     <View style={styles.container}>
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter tasks by: </Text>
-
-
         <View style={styles.filterContainer}>
           <Button
             title="Filter tasks"
@@ -251,7 +240,6 @@ const TasksScreen = () => {
         </View>
 
       </View>
-
 
       <Modal
         visible={filterModalVisible}
@@ -285,6 +273,20 @@ const TasksScreen = () => {
                 <Picker.Item label="Low" value="low" />
                 <Picker.Item label="Medium" value="medium" />
                 <Picker.Item label="High" value="high" />
+              </Picker>
+
+            </View>
+
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Filter tasks by category: </Text>
+              <Picker
+                style={styles.filterPicker}
+                selectedValue={filterCategory}
+                onValueChange={(itemValue) => setFilterCategory(itemValue)}
+              >
+                <Picker.Item label="Work" value="work" />
+                <Picker.Item label="Personal" value="personal" />
+                <Picker.Item label="Others" value="others" />
               </Picker>
             </View>
             <Button
@@ -340,36 +342,17 @@ const TasksScreen = () => {
                   onChange={handleDateChange}
                 />
               ) : (
-                <Text>{taskDueDate.toLocaleDateString()}</Text>
+                <View style={{ borderRadius: 5, padding: 5, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ marginRight: 5 }}>Select Due Date:</Text>
+                  <View style={{ backgroundColor: '#EDF7D2', borderColor: '#0E7C7B', borderWidth: 5, borderStyle: 'solid', borderRadius: 5 }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', padding: 5 }}>
+                      {taskDueDate.toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
               )}
             </TouchableOpacity>
 
-
-            {/* <MultiSelectDropDown
-              data={users && users.map((user) => ({ label: user.name, value: user.userID }))}
-              placeholder='Select Users...'
-              onSelect={(selectedList) => setSelectedUsers(selectedList)}
-              isSearchable={true}
-            /> */}
-
-
-            {/* <Picker
-              selectedValue={selectedUsers}
-              onValueChange={(itemValue, itemIndex) => setSelectedUsers(itemValue)}
-              multiple
-            >
-              {users.map((user) => <Picker.Item label={user.name} value={user.userID} key={user.userID} />)}
-            </Picker> */}
-
-            {/* <MultiSelectDropDown
-              data={users && users.map((user) => ({ label: user.name, value: user.userID }))}
-              placeholder='Select Users...'
-              onSelect={(selectedList) => setSelectedUsers(selectedList)}
-              isSearchable={true}
-            /> */}
-
-
-            {/* <View style={{ flex: 1 }}> */}
             <MultiSelect
               hideTags
               items={users}
@@ -395,15 +378,25 @@ const TasksScreen = () => {
             <View>
               {multiSelect.current && multiSelect.current.getSelectedItemsExt(selectedItems)}
             </View>
-            {/* </View> */}
 
             <Picker
               selectedValue={taskPriority}
               onValueChange={(itemValue, itemIndex) => setTaskPriority(itemValue)}
             >
+              <Picker.Item label="Select Priority" value="" />
               <Picker.Item label="Low" value="low" />
               <Picker.Item label="Medium" value="medium" />
               <Picker.Item label="High" value="high" />
+            </Picker>
+
+            <Picker
+              selectedValue={taskCategory}
+              onValueChange={(itemValue, itemIndex) => setTaskCategory(itemValue)}
+            >
+              <Picker.Item label="Select Category" value="" />
+              <Picker.Item label="Work" value="work" />
+              <Picker.Item label="Personal" value="personal" />
+              <Picker.Item label="Others" value="others" />
             </Picker>
             <Button
               disabled={!taskTitle || !taskDescription || !taskDueDate}
@@ -467,8 +460,9 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   datePickerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    marginLeft: 12,
     marginBottom: 20,
   },
   cancelButton: {
