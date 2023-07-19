@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator, TextInput } from 'react-native';
 import Task from '../components/Task';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, onSnapshot, addDoc, Timestamp, updateDoc, doc, where, query } from 'firebase/firestore';
@@ -7,10 +7,7 @@ import { auth, db } from '../services/firebase';
 import { Input, Button } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-// import MultiSelectDropDown from 'react-native-multiple-select'
 import MultiSelect from 'react-native-multiple-select'
-
-
 
 const TasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -27,12 +24,11 @@ const TasksScreen = () => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterPriority, setFilterPriority] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
-
-
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [taskCategory, setTaskCategory] = useState('');
+  const [taskNote, setTaskNote] = useState('');
 
   const multiSelect = useRef();
 
@@ -139,6 +135,7 @@ const TasksScreen = () => {
         status: 'in progress',
         priority: taskPriority,
         category: taskCategory,
+        note: taskNote,
       };
 
       const addedTaskRef = await addDoc(taskRef, newTask);
@@ -159,6 +156,7 @@ const TasksScreen = () => {
       setTaskDueDate(new Date());
       setModalVisible(false);
       setTaskCategory('');
+      setTaskNote('');
       alert('Task created successfully!');
     } catch (error) {
       console.error('Error creating task:', error);
@@ -192,6 +190,7 @@ const TasksScreen = () => {
         status: editingTask.status,
         priority: taskPriority,
         category: taskCategory,
+        note: taskNote,
       };
       await updateDoc(taskDocRef, updatedTask);
 
@@ -201,6 +200,7 @@ const TasksScreen = () => {
       setEditingTask(null);
       setModalVisible(false);
       setTaskCategory('');
+      setTaskNote('');
       alert('Task updated successfully!');
     } catch (error) {
       console.error('Error updating task:', error);
@@ -216,6 +216,7 @@ const TasksScreen = () => {
     setModalVisible(true);
     setTaskPriority(task.priority);
     setTaskCategory(task.category);
+    setTaskNote(task.note);
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -372,8 +373,7 @@ const TasksScreen = () => {
               itemTextColor="#000"
               displayKey="name"
               searchInputStyle={{ color: '#CCC' }}
-              submitButtonColor="#CCC"
-              submitButtonText="Submit"
+              hideSubmitButton={true}
             />
             <View>
               {multiSelect.current && multiSelect.current.getSelectedItemsExt(selectedItems)}
@@ -398,6 +398,20 @@ const TasksScreen = () => {
               <Picker.Item label="Personal" value="personal" />
               <Picker.Item label="Others" value="others" />
             </Picker>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ marginRight: 10 }}>Note:</Text>
+              <TextInput
+                style={{ flex: 1, height: 100 }}
+                placeholder="Note"
+                multiline={true}
+                numberOfLines={5}
+                value={taskNote}
+                onChangeText={setTaskNote}
+              />
+            </View>
+
+
             <Button
               disabled={!taskTitle || !taskDescription || !taskDueDate}
               title={editingTask ? 'Update Task' : 'Create Task'}
