@@ -3,7 +3,7 @@ import { Text, View, Alert } from 'react-native';
 import { Card, Button, ButtonGroup, Icon } from 'react-native-elements';
 import { updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
-const Task = ({ task, onEditTask }) => {
+const Task = ({ task, onEditTask, currentUser, allUsers }) => {
   const handleEditTask = () => {
     onEditTask(task);
   };
@@ -62,12 +62,17 @@ const Task = ({ task, onEditTask }) => {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{task.title}</Text>
         <Text>Priority: {task.priority}</Text>
-        <Icon
-          name="trash"
-          type="font-awesome"
-          color="#FF0000"
-          onPress={handleDeleteTask}
-        />
+
+        {currentUser && currentUser.uid == task.creator ?
+          <Icon
+            name="trash"
+            type="font-awesome"
+            color="#FF0000"
+            onPress={handleDeleteTask}
+          />
+          : <Text>
+            Created By: {allUsers.find(user => user.id == task.creator)?.name}</Text>
+        }
       </View>
       <Card.Divider />
       <Text>Description: {task.description}</Text>

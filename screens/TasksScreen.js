@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import Task from '../components/Task';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,10 @@ import { auth, db } from '../services/firebase';
 import { Input, Button } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+// import MultiSelectDropDown from 'react-native-multiple-select'
+import MultiSelect from 'react-native-multiple-select'
+
+
 
 const TasksScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -22,6 +26,15 @@ const TasksScreen = () => {
   const [taskPriority, setTaskPriority] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterPriority, setFilterPriority] = useState('');
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const multiSelect = useRef();
+
+  const onSelectedItemsChange = (selectedItems) => {
+    setSelectedItems(selectedItems);
+  };
+
 
 
   useEffect(() => {
@@ -32,6 +45,58 @@ const TasksScreen = () => {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+
+      let usersArray = snapshot.docs.map((doc) => doc.data());
+      setUsers(usersArray.map(e => ({ name: e.name, id: e.userID })));
+
+    });
+    return unsubscribe;
+  }, []);
+
+
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     setLoading(true);
+  //     const tasksRef = collection(db, 'tasks');
+  //     let q = '';
+  //     if (filterStatus && filterPriority) {
+  //       q = query(
+  //         tasksRef,
+  //         where('creator', '==', currentUser.uid),
+  //         where('status', '==', filterStatus),
+  //         where('priority', '==', filterPriority)
+  //       );
+  //     } else if (filterStatus) {
+  //       q = query(
+  //         tasksRef,
+  //         where('creator', '==', currentUser.uid),
+  //         where('status', '==', filterStatus)
+  //       );
+  //     } else if (filterPriority) {
+  //       q = query(
+  //         tasksRef,
+  //         where('creator', '==', currentUser.uid),
+  //         where('priority', '==', filterPriority)
+  //       );
+  //     } else {
+  //       q = query(
+  //         tasksRef,
+  //         where('creator', '==', currentUser.uid),
+  //         where('status', '!=', 'completed')
+  //       );
+  //     }
+
+  //     const unsubscribe = onSnapshot(q, (snapshot) => {
+  //       const userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+  //       setTasks(userTasks);
+  //       setLoading(false);
+  //     });
+  //     return unsubscribe;
+  //   }
+  // }, [currentUser, filterStatus, filterPriority]);
+
+  useEffect(() => {
     if (currentUser) {
       setLoading(true);
       const tasksRef = collection(db, 'tasks');
@@ -39,32 +104,31 @@ const TasksScreen = () => {
       if (filterStatus && filterPriority) {
         q = query(
           tasksRef,
-          where('creator', '==', currentUser.uid),
           where('status', '==', filterStatus),
           where('priority', '==', filterPriority)
         );
       } else if (filterStatus) {
         q = query(
           tasksRef,
-          where('creator', '==', currentUser.uid),
           where('status', '==', filterStatus)
         );
       } else if (filterPriority) {
         q = query(
           tasksRef,
-          where('creator', '==', currentUser.uid),
           where('priority', '==', filterPriority)
         );
       } else {
         q = query(
           tasksRef,
-          where('creator', '==', currentUser.uid),
           where('status', '!=', 'completed')
         );
       }
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        let userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        userTasks = userTasks.filter(el => el.collaborators.find(uid => uid == currentUser.uid) || el.creator == currentUser.uid)
+        console.log('1111111', currentUser.uid);
+        console.log(userTasks);
         setTasks(userTasks);
         setLoading(false);
       });
@@ -85,7 +149,7 @@ const TasksScreen = () => {
         description: taskDescription,
         dueDate: dueDateTimestamp,
         creator: userID,
-        collaborators: [userID],
+        collaborators: selectedItems || [],
         status: 'in progress',
         priority: taskPriority,
       };
@@ -136,11 +200,10 @@ const TasksScreen = () => {
         title: taskTitle,
         description: taskDescription,
         dueDate: dueDateTimestamp,
-        collaborators: editingTask.collaborators || [],
+        collaborators: selectedItems || [],
         status: editingTask.status,
         priority: taskPriority,
       };
-
       await updateDoc(taskDocRef, updatedTask);
 
       setTaskTitle('');
@@ -238,7 +301,7 @@ const TasksScreen = () => {
           <ActivityIndicator size="large" color="blue" />
         ) : (
           tasks.map((task, index) => (
-            <Task key={index} task={task} onEditTask={openTaskModal} />
+            <Task key={index} task={task} onEditTask={openTaskModal} currentUser={currentUser} allUsers={users} />
           ))
         )}
       </ScrollView>
@@ -280,6 +343,60 @@ const TasksScreen = () => {
                 <Text>{taskDueDate.toLocaleDateString()}</Text>
               )}
             </TouchableOpacity>
+
+
+            {/* <MultiSelectDropDown
+              data={users && users.map((user) => ({ label: user.name, value: user.userID }))}
+              placeholder='Select Users...'
+              onSelect={(selectedList) => setSelectedUsers(selectedList)}
+              isSearchable={true}
+            /> */}
+
+
+            {/* <Picker
+              selectedValue={selectedUsers}
+              onValueChange={(itemValue, itemIndex) => setSelectedUsers(itemValue)}
+              multiple
+            >
+              {users.map((user) => <Picker.Item label={user.name} value={user.userID} key={user.userID} />)}
+            </Picker> */}
+
+            {/* <MultiSelectDropDown
+              data={users && users.map((user) => ({ label: user.name, value: user.userID }))}
+              placeholder='Select Users...'
+              onSelect={(selectedList) => setSelectedUsers(selectedList)}
+              isSearchable={true}
+            /> */}
+
+
+            {/* <View style={{ flex: 1 }}> */}
+            <MultiSelect
+              hideTags
+              items={users}
+              uniqueKey="id"
+              ref={multiSelect}
+              onSelectedItemsChange={onSelectedItemsChange}
+              selectedItems={selectedItems}
+              selectText="Pick Items"
+              searchInputPlaceholderText="Search Items..."
+              onChangeInput={(text) => console.log(text)}
+              altFontFamily="ProximaNova-Light"
+              tagRemoveIconColor="#CCC"
+              tagBorderColor="#CCC"
+              tagTextColor="#CCC"
+              selectedItemTextColor="#CCC"
+              selectedItemIconColor="#CCC"
+              itemTextColor="#000"
+              displayKey="name"
+              searchInputStyle={{ color: '#CCC' }}
+              submitButtonColor="#CCC"
+              submitButtonText="Submit"
+            />
+            <View>
+              {multiSelect.current && multiSelect.current.getSelectedItemsExt(selectedItems)}
+            </View>
+            {/* </View> */}
+
             <Picker
               selectedValue={taskPriority}
               onValueChange={(itemValue, itemIndex) => setTaskPriority(itemValue)}
