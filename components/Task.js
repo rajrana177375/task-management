@@ -57,11 +57,44 @@ const Task = ({ task, onEditTask, currentUser, allUsers }) => {
     }
   };
 
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'red';
+      case 'medium':
+        return 'yellow';
+      case 'low':
+        return 'green';
+      default:
+        return 'gray';
+    }
+  };
+
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'work':
+        return 'rgb(204, 229, 255)';
+      case 'personal':
+        return '#DECDF5';
+      case 'others':
+        return '#E5DADA';
+      default:
+        return '#FFFFFF';
+    }
+  };
+
   return (
-    <Card>
+    <Card
+      containerStyle={{
+        borderWidth: 5,
+        borderColor: getPriorityColor(task.priority),
+        borderRadius: 4,
+        backgroundColor: getCategoryColor(task.category), 
+      }}
+    >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{task.title}</Text>
-        <Text>Priority: {task.priority}</Text>
+        <Text style={{ fontWeight: 'bold' }}>Priority: {task.priority?.toUpperCase() || 'LOW'}</Text>
 
         {currentUser && currentUser.uid == task.creator ?
           <Icon
@@ -71,11 +104,13 @@ const Task = ({ task, onEditTask, currentUser, allUsers }) => {
             onPress={handleDeleteTask}
           />
           : <Text>
-            Created By: {allUsers.find(user => user.id == task.creator)?.name}</Text>
+            Assigned By: {allUsers.find(user => user.id == task.creator)?.name}</Text>
         }
       </View>
       <Card.Divider />
       <Text>Description: {task.description}</Text>
+      <Text>Category: {task.category?.toUpperCase() || 'OTHERS'}</Text>
+
       <ButtonGroup
         buttons={['In Progress', 'Completed', 'Pending']}
         selectedIndex={task.status === 'completed' ? 1 : task.status === 'pending' ? 2 : 0}
@@ -94,6 +129,7 @@ const Task = ({ task, onEditTask, currentUser, allUsers }) => {
         onPress={handleEditTask}
         containerStyle={{ width: '95%', alignSelf: 'center' }}
       />
+      <Text style={{fontWeight: 'bold', marginTop: 10}}>*note: {task.note}</Text>
     </Card>
   );
 };

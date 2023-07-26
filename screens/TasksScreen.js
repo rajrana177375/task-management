@@ -25,7 +25,6 @@ const TasksScreen = () => {
   const [filterPriority, setFilterPriority] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [taskCategory, setTaskCategory] = useState('');
   const [taskNote, setTaskNote] = useState('');
@@ -35,8 +34,6 @@ const TasksScreen = () => {
   const onSelectedItemsChange = (selectedItems) => {
     setSelectedItems(selectedItems);
   };
-
-
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -156,6 +153,7 @@ const TasksScreen = () => {
       setTaskDueDate(new Date());
       setModalVisible(false);
       setTaskCategory('');
+      setSelectedItems([]);
       setTaskNote('');
       alert('Task created successfully!');
     } catch (error) {
@@ -200,6 +198,7 @@ const TasksScreen = () => {
       setEditingTask(null);
       setModalVisible(false);
       setTaskCategory('');
+      setSelectedItems([]);
       setTaskNote('');
       alert('Task updated successfully!');
     } catch (error) {
@@ -235,7 +234,7 @@ const TasksScreen = () => {
         <Text style={styles.filterLabel}>Filter tasks by: </Text>
         <View style={styles.filterContainer}>
           <Button
-            title="Filter tasks"
+            title="Open Filter"
             onPress={() => setFilterModalVisible(true)}
           />
         </View>
@@ -364,7 +363,6 @@ const TasksScreen = () => {
               selectText="Pick Items"
               searchInputPlaceholderText="Search Items..."
               onChangeInput={(text) => console.log(text)}
-              altFontFamily="ProximaNova-Light"
               tagRemoveIconColor="#CCC"
               tagBorderColor="#CCC"
               tagTextColor="#CCC"
@@ -402,7 +400,15 @@ const TasksScreen = () => {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ marginRight: 10 }}>Note:</Text>
               <TextInput
-                style={{ flex: 1, height: 100 }}
+                style={{
+                  flex: 1,
+                  height: 100,
+                  borderWidth: 1,
+                  borderColor: 'gray',
+                  borderRadius: 4,
+                  padding: 8,
+                  marginBottom: 15
+                }}
                 placeholder="Note"
                 multiline={true}
                 numberOfLines={5}
@@ -436,6 +442,7 @@ const TasksScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F2E3BC'
   },
   filterContainer: {
     flexDirection: 'row',
