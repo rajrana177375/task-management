@@ -13,6 +13,9 @@ const Footer = ({ navigation }) => {
       case 1:
         navigation.navigate('Profile');
         break;
+      case 2:
+        navigation.navigate('TaskBoard');
+        break;
       default:
         break;
     }
@@ -23,6 +26,9 @@ const Footer = ({ navigation }) => {
       <Tab.Item icon={<Icon name='list' type='font-awesome' size={20} color='#999' />} />
 
       <Tab.Item icon={<Icon name='user' type='font-awesome' size={20} color='#999' />} />
+
+      <Tab.Item icon={<Icon name='gear' type='font-awesome' size={20} color='#999' />} />
+
     </Tab>
   );
 };
