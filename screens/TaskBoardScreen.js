@@ -7,7 +7,6 @@ const TaskBoardScreen = () => {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
 
-  // Fetch tasks from Firebase
   useEffect(() => {
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), async (querySnapshot) => {
       const tasks = [];
@@ -27,6 +26,7 @@ const TaskBoardScreen = () => {
       querySnapshot.forEach((doc) => {
         users.push({
           id: doc.id,
+          color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
           ...doc.data(),
         });
       });
@@ -35,7 +35,6 @@ const TaskBoardScreen = () => {
       setUsers(users);
     });
 
-    // Cleanup function
     return () => {
       unsubscribeTasks();
       unsubscribeUsers();
@@ -56,17 +55,30 @@ const TaskBoardScreen = () => {
   );
 };
 
-const Task = ({ task, users }) => {
-  const collaboratorInitials = task.collaborators.map((collaboratorId) => {
-    const user = users.find(user => user.userID === collaboratorId);
-    return user ? user.name[0].toUpperCase() : '';
-  }).join(', ');
+const Avatar = ({initial, backgroundColor}) => (
+  <View style={{...styles.avatar, backgroundColor}}>
+    <Text style={styles.avatarText}>{initial}</Text>
+  </View>
+);
 
+const Task = ({ task, users }) => {
   return (
     <View style={styles.task}>
       <Text style={styles.taskTitle}>{task.title}</Text>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{collaboratorInitials}</Text>
+      <View style={styles.avatarsContainer}>
+        {task.collaborators.map((collaboratorId, index) => {
+          const user = users.find(user => user.userID === collaboratorId);
+          const initial = user ? user.name[0].toUpperCase() : '';
+          const color = user ? user.color : '#000';
+
+          return (
+            <Avatar 
+              key={`${collaboratorId}-${index}`} 
+              initial={initial}
+              backgroundColor={color} 
+            />
+          );
+        })}
       </View>
     </View>
   );
@@ -108,9 +120,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#52575D'
   },
+  avatarsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end'
+  },
   avatar: {
+    marginLeft: -10,
     backgroundColor: '#6a7f7a',
-    borderRadius: 25,
+    borderRadius: 12.5,
     width: 25,
     height: 25,
     justifyContent: 'center',

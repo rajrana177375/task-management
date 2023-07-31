@@ -28,6 +28,7 @@ const TasksScreen = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [taskCategory, setTaskCategory] = useState('');
   const [taskNote, setTaskNote] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const multiSelect = useRef();
 
@@ -99,8 +100,7 @@ const TasksScreen = () => {
         );
       } else {
         q = query(
-          tasksRef,
-          where('status', '!=', 'completed')
+          tasksRef
         );
       }
 
@@ -113,6 +113,26 @@ const TasksScreen = () => {
       return unsubscribe;
     }
   }, [currentUser, filterStatus, filterPriority, filterCategory]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setLoading(true);
+      const tasksRef = collection(db, 'tasks');
+      let q = '';
+      if (searchTerm) {
+        q = query(tasksRef, where('title', '==', searchTerm));
+      } else {
+        q = query(tasksRef);
+      }
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        let userTasks = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        userTasks = userTasks.filter(el => el.collaborators.find(uid => uid == currentUser.uid) || el.creator == currentUser.uid)
+        setTasks(userTasks);
+        setLoading(false);
+      });
+      return unsubscribe;
+    }
+  }, [currentUser, searchTerm]);
 
 
   const handleTaskCreation = async () => {
@@ -232,6 +252,12 @@ const TasksScreen = () => {
     <View style={styles.container}>
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter tasks by: </Text>
+        <TextInput
+          style={styles.searchBox}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholder="Search tasks"
+        />
         <View style={styles.filterContainer}>
           <Button title="Open Filter" onPress={() => setFilterModalVisible(true)} buttonStyle={styles.openFilterButton} titleStyle={styles.openFilterButtonText} />
         </View>
@@ -385,11 +411,11 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 10, // for Android
-    shadowColor: '#000', // for iOS
-    shadowOffset: { width: 0, height: 3 }, // for iOS
-    shadowOpacity: 0.3, // for iOS
-    shadowRadius: 2, // for iOS
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   modalContainer: {
     flex: 1,
@@ -454,6 +480,13 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: '#333',
+  },
+  searchBox: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
   },
 });
 
