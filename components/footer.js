@@ -22,13 +22,32 @@ const Footer = ({ navigation }) => {
   };
 
   return (
-    <Tab value={activeTab} onChange={handleTabPress} containerStyle={{ backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#ccc', height: 56 }}>
-      <Tab.Item icon={<Icon name='list' type='font-awesome' size={20} color='#999' />} />
-
-      <Tab.Item icon={<Icon name='user' type='font-awesome' size={20} color='#999' />} />
-
-      <Tab.Item icon={<Icon name='gear' type='font-awesome' size={20} color='#999' />} />
-
+    <Tab 
+      value={activeTab} 
+      onChange={handleTabPress} 
+      containerStyle={{ 
+        backgroundColor: '#f8f8f8', 
+        borderTopWidth: 1, 
+        borderTopColor: '#e7e7e7', 
+        height: 64, 
+        justifyContent: 'space-around' 
+      }}
+    >
+      <Tab.Item
+        // title="Tasks"
+        titleStyle={activeTab === 0 ? { color: '#1976d2' } : { color: '#999' }}
+        icon={<Icon name='list' type='font-awesome' size={28} color={activeTab === 0 ? '#1976d2' : '#999'} />}
+      />
+      <Tab.Item
+        // title="Profile"
+        titleStyle={activeTab === 1 ? { color: '#1976d2' } : { color: '#999' }}
+        icon={<Icon name='user' type='font-awesome' size={28} color={activeTab === 1 ? '#1976d2' : '#999'} />}
+      />
+      <Tab.Item
+        // title="Settings"
+        titleStyle={activeTab === 2 ? { color: '#1976d2' } : { color: '#999' }}
+        icon={<Icon name='gear' type='font-awesome' size={28} color={activeTab === 2 ? '#1976d2' : '#999'} />}
+      />
     </Tab>
   );
 };

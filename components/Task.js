@@ -1,7 +1,69 @@
 import { db } from '../services/firebase';
-import { Text, View, Alert } from 'react-native';
+import { Text, View, Alert, StyleSheet } from 'react-native';
 import { Card, Button, ButtonGroup, Icon } from 'react-native-elements';
 import { updateDoc, doc, deleteDoc } from 'firebase/firestore';
+
+const styles = StyleSheet.create({
+  cardContainer: {
+    borderWidth: 2,
+    borderRadius: 10,
+    borderColor: '#F1F1F1',
+    padding: 10,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  taskTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+  },
+  priorityText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  descriptionText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#444',
+    marginBottom: 10,
+  },
+  categoryText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#444',
+    marginBottom: 10,
+  },
+  buttonGroupContainer: {
+    marginVertical: 10,
+  },
+  buttonGroupButton: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#F1F1F1',
+    borderWidth: 1,
+  },
+  buttonGroupSelected: {
+    backgroundColor: '#F1F1F1',
+  },
+  buttonText: {
+    color: '#000000',
+  },
+  buttonSelectedText: {
+    color: '#FFFFFF',
+  },
+  editButtonContainer: {
+    marginTop: 10,
+  },
+  noteText: {
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#444',
+  },
+});
 
 const Task = ({ task, onEditTask, currentUser, allUsers }) => {
   const handleEditTask = () => {
@@ -43,93 +105,73 @@ const Task = ({ task, onEditTask, currentUser, allUsers }) => {
       { cancelable: true }
     );
   };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'in progress':
-        return '#F19A3E';
+        return '#4FC3F7';  // Light Blue
       case 'completed':
-        return '#B9FFB7';
+        return '#66BB6A';  // Light Green
       case 'pending':
-        return '#F15152';
+        return '#EF5350';  // Red
       default:
-        return '#FFFFFF';
+        return '#E0E0E0';  // Grey
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
-        return 'red';
+        return '#EF5350';  // Red
       case 'medium':
-        return 'yellow';
+        return '#FFA726';  // Orange
       case 'low':
-        return 'green';
+        return '#66BB6A';  // Light Green
       default:
-        return 'gray';
+        return '#78909C';  // Blue Grey
     }
   };
 
   const getCategoryColor = (category) => {
     switch (category) {
       case 'work':
-        return 'rgb(204, 229, 255)';
+        return '#90CAF9';  // Blue
       case 'personal':
-        return '#DECDF5';
+        return '#F48FB1';  // Pink
       case 'others':
-        return '#E5DADA';
+        return '#BCAAA4';  // Brown
       default:
-        return '#FFFFFF';
+        return '#CFD8DC';  // Light Blue Grey
     }
   };
 
   return (
-    <Card
-      containerStyle={{
-        borderWidth: 5,
-        borderColor: getPriorityColor(task.priority),
-        borderRadius: 4,
-        backgroundColor: getCategoryColor(task.category), 
-      }}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{task.title}</Text>
-        <Text style={{ fontWeight: 'bold' }}>Priority: {task.priority?.toUpperCase() || 'LOW'}</Text>
-
-        {currentUser && currentUser.uid == task.creator ?
-          <Icon
-            name="trash"
-            type="font-awesome"
-            color="#FF0000"
-            onPress={handleDeleteTask}
-          />
-          : <Text>
-            Assigned By: {allUsers.find(user => user.id == task.creator)?.name}</Text>
+    <Card containerStyle={[styles.cardContainer, { borderColor: getPriorityColor(task.priority), backgroundColor: getCategoryColor(task.category) }]}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.taskTitle}>{task.title}</Text>
+        <Text style={styles.priorityText}>Priority: {task.priority?.toUpperCase() || 'LOW'}</Text>
+        {currentUser && currentUser.uid == task.creator ? 
+          <Icon name="trash" type="font-awesome" color="#FF0000" onPress={handleDeleteTask} /> : 
+          <Text> Assigned By: {allUsers.find(user => user.id == task.creator)?.name}</Text> 
         }
       </View>
       <Card.Divider />
-      <Text>Description: {task.description}</Text>
-      <Text>Category: {task.category?.toUpperCase() || 'OTHERS'}</Text>
-
-      <ButtonGroup
+      <Text style={styles.descriptionText}>Description: {task.description}</Text>
+      <Text style={styles.categoryText}>Category: {task.category?.toUpperCase() || 'OTHERS'}</Text>
+      <ButtonGroup 
         buttons={['In Progress', 'Completed', 'Pending']}
         selectedIndex={task.status === 'completed' ? 1 : task.status === 'pending' ? 2 : 0}
         onPress={(index) => {
           const status = index === 1 ? 'completed' : index === 2 ? 'pending' : 'in progress';
           handleTaskStatusChange(status);
         }}
-        containerStyle={{ width: '95%' }}
-        buttonStyle={{ flex: 1, backgroundColor: '#FFFFFF' }}
-        selectedButtonStyle={{ backgroundColor: getStatusColor(task.status) }}
-        textStyle={{ color: '#000000' }}
-        selectedTextStyle={{ color: '#FFFFFF' }}
+        containerStyle={styles.buttonGroupContainer}
+        buttonStyle={styles.buttonGroupButton}
+        selectedButtonStyle={[styles.buttonGroupSelected, { backgroundColor: getStatusColor(task.status) }]}
+        textStyle={styles.buttonText}
+        selectedTextStyle={styles.buttonSelectedText}
       />
-      <Button
-        title="Edit"
-        onPress={handleEditTask}
-        containerStyle={{ width: '95%', alignSelf: 'center' }}
-      />
-      <Text style={{fontWeight: 'bold', marginTop: 10}}>*note: {task.note}</Text>
+      <Button title="Edit" onPress={handleEditTask} containerStyle={styles.editButtonContainer} />
+      <Text style={styles.noteText}>*note: {task.note}</Text>
     </Card>
   );
 };

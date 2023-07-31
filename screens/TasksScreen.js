@@ -128,7 +128,7 @@ const TasksScreen = () => {
         description: taskDescription,
         dueDate: dueDateTimestamp,
         creator: userID,
-        collaborators: selectedItems || [],
+        collaborators: selectedItems.length ? selectedItems : [auth.currentUser.uid],
         status: 'in progress',
         priority: taskPriority,
         category: taskCategory,
@@ -184,7 +184,7 @@ const TasksScreen = () => {
         title: taskTitle,
         description: taskDescription,
         dueDate: dueDateTimestamp,
-        collaborators: selectedItems || [],
+        collaborators: selectedItems.length ? selectedItems : [auth.currentUser.uid],
         status: editingTask.status,
         priority: taskPriority,
         category: taskCategory,
@@ -233,29 +233,16 @@ const TasksScreen = () => {
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter tasks by: </Text>
         <View style={styles.filterContainer}>
-          <Button
-            title="Open Filter"
-            onPress={() => setFilterModalVisible(true)}
-          />
+          <Button title="Open Filter" onPress={() => setFilterModalVisible(true)} buttonStyle={styles.openFilterButton} titleStyle={styles.openFilterButtonText} />
         </View>
-
       </View>
-
-      <Modal
-        visible={filterModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setFilterModalVisible(false)}
-      >
+      <Modal visible={filterModalVisible} animationType="slide" transparent={true} onRequestClose={() => setFilterModalVisible(false)}>
         <View style={styles.filterModalContainer}>
           <View style={styles.filterModalContent}>
+            <Text style={styles.filterHeader}>Apply Filters</Text>
             <View style={styles.filterSection}>
               <Text style={styles.filterLabel}>Filter tasks by status: </Text>
-              <Picker
-                style={styles.filterPicker}
-                selectedValue={filterStatus}
-                onValueChange={handleFilterChange}
-              >
+              <Picker style={styles.filterPicker} selectedValue={filterStatus} onValueChange={handleFilterChange}>
                 <Picker.Item label="None" value="" />
                 <Picker.Item label="In Progress" value="in progress" />
                 <Picker.Item label="Completed" value="completed" />
@@ -264,249 +251,212 @@ const TasksScreen = () => {
             </View>
             <View style={styles.filterSection}>
               <Text style={styles.filterLabel}>Filter tasks by priority: </Text>
-              <Picker
-                style={styles.filterPicker}
-                selectedValue={filterPriority}
-                onValueChange={(value) => setFilterPriority(value)}
-              >
+              <Picker style={styles.filterPicker} selectedValue={filterPriority} onValueChange={(value) => setFilterPriority(value)}>
                 <Picker.Item label="None" value="" />
                 <Picker.Item label="Low" value="low" />
                 <Picker.Item label="Medium" value="medium" />
                 <Picker.Item label="High" value="high" />
               </Picker>
-
             </View>
-
             <View style={styles.filterSection}>
               <Text style={styles.filterLabel}>Filter tasks by category: </Text>
-              <Picker
-                style={styles.filterPicker}
-                selectedValue={filterCategory}
-                onValueChange={(itemValue) => setFilterCategory(itemValue)}
-              >
+              <Picker style={styles.filterPicker} selectedValue={filterCategory} onValueChange={(itemValue) => setFilterCategory(itemValue)}>
+                <Picker.Item label="None" value="" />
                 <Picker.Item label="Work" value="work" />
                 <Picker.Item label="Personal" value="personal" />
                 <Picker.Item label="Others" value="others" />
               </Picker>
             </View>
-            <Button
-              title="Apply Filters"
-              onPress={() => setFilterModalVisible(false)}
-            />
+            <Button title="Apply Filters" onPress={() => setFilterModalVisible(false)} buttonStyle={styles.applyFilterButton} titleStyle={styles.applyFilterButtonText} />
           </View>
         </View>
       </Modal>
-
-
-      <ScrollView>
+      <ScrollView contentContainerStyle={styles.taskList}>
         {loading ? (
-          <ActivityIndicator size="large" color="blue" />
+          <ActivityIndicator size="large" color="#E1B12C" />
         ) : (
           tasks.map((task, index) => (
             <Task key={index} task={task} onEditTask={openTaskModal} currentUser={currentUser} allUsers={users} />
           ))
         )}
       </ScrollView>
-
       <TouchableOpacity style={styles.addButton} onPress={addNewTask}>
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Input
-              placeholder="Title"
-              value={taskTitle}
-              onChangeText={setTaskTitle}
-            />
-            <Input
-              placeholder="Description"
-              value={taskDescription}
-              onChangeText={setTaskDescription}
-            />
-            <TouchableOpacity
-              style={styles.datePickerContainer}
-              onPress={() => setShowDatePicker(true)}
-            >
+            <Text style={styles.modalHeader}>{editingTask ? 'Update Task' : 'Create Task'}</Text>
+            <Input placeholder="Title" value={taskTitle} onChangeText={setTaskTitle} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
+            <Input placeholder="Description" value={taskDescription} onChangeText={setTaskDescription} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} multiline={true} />
+            <View style={styles.datePickerContainer}>
               {showDatePicker ? (
-                <DateTimePicker
-                  value={taskDueDate}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                />
+                <DateTimePicker value={taskDueDate} mode="date" display="default" onChange={handleDateChange} minimumDate={new Date()} />
               ) : (
-                <View style={{ borderRadius: 5, padding: 5, flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ marginRight: 5 }}>Select Due Date:</Text>
-                  <View style={{ backgroundColor: '#EDF7D2', borderColor: '#0E7C7B', borderWidth: 5, borderStyle: 'solid', borderRadius: 5 }}>
-                    <Text style={{ fontSize: 17, fontWeight: 'bold', padding: 5 }}>
-                      {taskDueDate.toLocaleDateString()}
-                    </Text>
-                  </View>
-                </View>
+                <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDatePicker(true)}>
+                  <Text style={styles.datePickerText}>Select Due Date: {taskDueDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-
-            <MultiSelect
-              hideTags
-              items={users}
-              uniqueKey="id"
-              ref={multiSelect}
-              onSelectedItemsChange={onSelectedItemsChange}
-              selectedItems={selectedItems}
-              selectText="Pick Items"
-              searchInputPlaceholderText="Search Items..."
-              onChangeInput={(text) => console.log(text)}
-              tagRemoveIconColor="#CCC"
-              tagBorderColor="#CCC"
-              tagTextColor="#CCC"
-              selectedItemTextColor="#CCC"
-              selectedItemIconColor="#CCC"
-              itemTextColor="#000"
-              displayKey="name"
-              searchInputStyle={{ color: '#CCC' }}
-              hideSubmitButton={true}
-            />
+            </View>
+            <MultiSelect hideTags items={users} uniqueKey="id" ref={multiSelect} onSelectedItemsChange={onSelectedItemsChange} selectedItems={selectedItems} selectText="Pick Collaborators" searchInputPlaceholderText="Search Collaborators..." onChangeInput={(text) => console.log(text)} tagRemoveIconColor="#CCC" tagBorderColor="#CCC" tagTextColor="#CCC" selectedItemTextColor="#CCC" selectedItemIconColor="#CCC" itemTextColor="#000" displayKey="name" searchInputStyle={{ color: '#CCC' }} hideSubmitButton={true} />
             <View>
               {multiSelect.current && multiSelect.current.getSelectedItemsExt(selectedItems)}
             </View>
-
-            <Picker
-              selectedValue={taskPriority}
-              onValueChange={(itemValue, itemIndex) => setTaskPriority(itemValue)}
-            >
-              <Picker.Item label="Select Priority" value="" />
-              <Picker.Item label="Low" value="low" />
-              <Picker.Item label="Medium" value="medium" />
-              <Picker.Item label="High" value="high" />
-            </Picker>
-
-            <Picker
-              selectedValue={taskCategory}
-              onValueChange={(itemValue, itemIndex) => setTaskCategory(itemValue)}
-            >
-              <Picker.Item label="Select Category" value="" />
-              <Picker.Item label="Work" value="work" />
-              <Picker.Item label="Personal" value="personal" />
-              <Picker.Item label="Others" value="others" />
-            </Picker>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ marginRight: 10 }}>Note:</Text>
-              <TextInput
-                style={{
-                  flex: 1,
-                  height: 100,
-                  borderWidth: 1,
-                  borderColor: 'gray',
-                  borderRadius: 4,
-                  padding: 8,
-                  marginBottom: 15
-                }}
-                placeholder="Note"
-                multiline={true}
-                numberOfLines={5}
-                value={taskNote}
-                onChangeText={setTaskNote}
-              />
-            </View>
-
-
-            <Button
-              disabled={!taskTitle || !taskDescription || !taskDueDate}
-              title={editingTask ? 'Update Task' : 'Create Task'}
-              onPress={editingTask ? handleTaskUpdate : handleTaskCreation}
-            />
-            <Button
-              title="Cancel"
-              onPress={() => {
-                setModalVisible(false);
-                setEditingTask(null);
-                setTaskPriority('');
-              }}
-              buttonStyle={styles.cancelButton}
-            />
+            <Button title={editingTask ? 'Update Task' : 'Create Task'} onPress={editingTask ? handleTaskUpdate : handleTaskCreation} buttonStyle={styles.createTaskButton} titleStyle={styles.createTaskButtonText} disabled={!taskTitle || !taskDescription || !taskDueDate} />
+            <Button title="Cancel" onPress={() => { setModalVisible(false); setEditingTask(null); setTaskPriority(''); }} buttonStyle={styles.cancelButton} titleStyle={styles.cancelButtonText} />
           </View>
         </View>
       </Modal>
     </View>
   );
+
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2E3BC'
+    backgroundColor: '#fff',
   },
   filterContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 5,
+    padding: 15,
   },
   filterLabel: {
-    marginRight: 5,
+    fontSize: 16,
+    color: '#333',
+  },
+  openFilterButton: {
+    backgroundColor: '#E1B12C',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  openFilterButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
-  },
-  filterPicker: {
-    width: '65%',
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#6CBEED',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  datePickerContainer: {
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    marginLeft: 12,
-    marginBottom: 20,
-  },
-  cancelButton: {
-    marginTop: 20,
-    backgroundColor: 'red',
   },
   filterModalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   filterModalContent: {
-    backgroundColor: 'white',
-    borderRadius: 5,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     padding: 20,
     width: '80%',
-    maxHeight: '80%',
+  },
+  filterHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
   },
   filterSection: {
     marginBottom: 20,
   },
-
+  filterPicker: {
+    height: 50,
+    width: '100%',
+  },
+  applyFilterButton: {
+    backgroundColor: '#E1B12C',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  applyFilterButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  taskList: {
+    padding: 10,
+  },
+  addButton: {
+    position: 'absolute',
+    right: 30,
+    bottom: 30,
+    backgroundColor: '#E1B12C',
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10, // for Android
+    shadowColor: '#000', // for iOS
+    shadowOffset: { width: 0, height: 3 }, // for iOS
+    shadowOpacity: 0.3, // for iOS
+    shadowRadius: 2, // for iOS
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+  },
+  modalHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    borderBottomColor: 'transparent',
+  },
+  inputText: {
+    backgroundColor: '#E8E8E8',
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E8E8E8',
+    padding: 10,
+    borderRadius: 10,
+    width: '100%',
+  },
+  datePickerText: {
+    fontSize: 16,
+  },
+  createTaskButton: {
+    backgroundColor: '#E1B12C',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  createTaskButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#E8E8E8',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    color: '#333',
+  },
 });
+
+
 
 export default TasksScreen;
