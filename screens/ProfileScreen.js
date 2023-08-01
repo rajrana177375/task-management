@@ -63,7 +63,7 @@ function ProfileScreen({ navigation }) {
           setUsername(userDoc.data().username);
         }
 
-        setLoading(false); // Set loading to false when the data is fetched
+        setLoading(false); 
       };
 
       fetchUserData();

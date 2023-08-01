@@ -4,7 +4,7 @@ import { Input, Button, Text } from 'react-native-elements';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import { doc, setDoc } from "firebase/firestore"
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const RegisterScreen = () => {
   const [name, setName] = useState('');
@@ -19,6 +19,19 @@ const RegisterScreen = () => {
   const goToLogin = () => {
     navigation.navigate('Login')
   }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setEmail('');
+        setPassword('');
+        setName('');
+        setConfirmPassword('');
+        setUsername('');
+      };
+    }, [])
+  );
+
 
   const handleRegister = async () => {
     if (password !== confirmPassword) return alert('Password does not match!');

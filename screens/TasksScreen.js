@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator, TextInput } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import Task from '../components/Task';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, onSnapshot, addDoc, Timestamp, updateDoc, doc, where, query } from 'firebase/firestore';
@@ -29,6 +29,8 @@ const TasksScreen = () => {
   const [taskCategory, setTaskCategory] = useState('');
   const [taskNote, setTaskNote] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
+  const [taskStatus, setTaskStatus] = useState('');
+
 
   const multiSelect = useRef();
 
@@ -149,7 +151,7 @@ const TasksScreen = () => {
         dueDate: dueDateTimestamp,
         creator: userID,
         collaborators: selectedItems.length ? selectedItems : [auth.currentUser.uid],
-        status: 'in progress',
+        status: taskStatus,
         priority: taskPriority,
         category: taskCategory,
         note: taskNote,
@@ -175,6 +177,8 @@ const TasksScreen = () => {
       setTaskCategory('');
       setSelectedItems([]);
       setTaskNote('');
+      setTaskStatus('');
+      setTaskPriority('');
       alert('Task created successfully!');
     } catch (error) {
       console.error('Error creating task:', error);
@@ -205,7 +209,7 @@ const TasksScreen = () => {
         description: taskDescription,
         dueDate: dueDateTimestamp,
         collaborators: selectedItems.length ? selectedItems : [auth.currentUser.uid],
-        status: editingTask.status,
+        status: taskStatus,
         priority: taskPriority,
         category: taskCategory,
         note: taskNote,
@@ -220,12 +224,28 @@ const TasksScreen = () => {
       setTaskCategory('');
       setSelectedItems([]);
       setTaskNote('');
+      setTaskStatus('');
+      setTaskPriority('');
       alert('Task updated successfully!');
     } catch (error) {
       console.error('Error updating task:', error);
       alert('Error updating task. Please try again.');
     }
   };
+
+  const clearData = () => {
+    setModalVisible(false); 
+    setTaskTitle('');
+    setTaskDescription('');
+    setTaskDueDate(new Date());
+    setEditingTask(null);
+    setModalVisible(false);
+    setTaskCategory('');
+    setSelectedItems([]);
+    setTaskNote('');
+    setTaskStatus('');
+    setTaskPriority('');
+  }
 
   const openTaskModal = (task) => {
     setTaskTitle(task.title);
@@ -235,6 +255,7 @@ const TasksScreen = () => {
     setModalVisible(true);
     setTaskPriority(task.priority);
     setTaskCategory(task.category);
+    setTaskStatus(task.status)
     setTaskNote(task.note);
   };
 
@@ -310,6 +331,11 @@ const TasksScreen = () => {
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
       <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+      <KeyboardAvoidingView
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    style={styles.container}
+  >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalHeader}>{editingTask ? 'Update Task' : 'Create Task'}</Text>
@@ -328,11 +354,48 @@ const TasksScreen = () => {
             <View>
               {multiSelect.current && multiSelect.current.getSelectedItemsExt(selectedItems)}
             </View>
+            {/* <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={taskStatus}
+                onValueChange={(itemValue) => setTaskStatus(itemValue)}>
+                <Picker.Item label="In Progress" value="in progress" />
+                <Picker.Item label="Completed" value="completed" />
+                <Picker.Item label="Pending" value="pending" />
+              </Picker>
+            </View> */}
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={taskPriority}
+                onValueChange={(itemValue) => setTaskPriority(itemValue)}>
+                <Picker.Item label="Low" value="low" />
+                <Picker.Item label="Medium" value="medium" />
+                <Picker.Item label="High" value="high" />
+              </Picker>
+            </View>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={taskCategory}
+                onValueChange={(itemValue) => setTaskCategory(itemValue)}>
+                <Picker.Item label="Work" value="work" />
+                <Picker.Item label="Personal" value="personal" />
+                <Picker.Item label="Others" value="others" />
+              </Picker>
+            </View>
+            <TextInput
+              style={styles.inputNote}
+              multiline={true}
+              numberOfLines={4}
+              onChangeText={text => setTaskNote(text)}
+              value={taskNote}
+              placeholder="Add Note"
+            />
             <Button title={editingTask ? 'Update Task' : 'Create Task'} onPress={editingTask ? handleTaskUpdate : handleTaskCreation} buttonStyle={styles.createTaskButton} titleStyle={styles.createTaskButtonText} disabled={!taskTitle || !taskDescription || !taskDueDate} />
-            <Button title="Cancel" onPress={() => { setModalVisible(false); setEditingTask(null); setTaskPriority(''); }} buttonStyle={styles.cancelButton} titleStyle={styles.cancelButtonText} />
+            <Button title="Cancel" onPress={() => { clearData() }} buttonStyle={styles.cancelButton} titleStyle={styles.cancelButtonText} />
           </View>
         </View>
-      </Modal>
+        </TouchableWithoutFeedback>
+  </KeyboardAvoidingView>     
+   </Modal>
     </View>
   );
 
@@ -488,6 +551,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
   },
+  pickerContainer: {
+    marginVertical: 5,
+    borderColor: '#CCC',
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  
+  inputNote: {
+    height: 60,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginTop: 5,
+    textAlignVertical: 'top',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10
+  }
+  
 });
 
 
